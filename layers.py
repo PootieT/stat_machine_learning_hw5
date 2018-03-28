@@ -25,8 +25,8 @@ def affine_forward(x, theta, theta0):
   # will need to reshape the input into rows.                                 #
   #############################################################################
   # 2 lines of code expected
-
-  pass
+  better_x = np.reshape(x, (x.shape[0],theta.shape[0]))
+  out = np.dot(better_x, theta) + theta0
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -57,9 +57,12 @@ def affine_backward(dout, cache):
   #############################################################################
   # Hint: do not forget to reshape x into (m,d) form
   # 4-5 lines of code expected
-
-
-  pass
+  better_x = np.reshape(x, (x.shape[0],theta.shape[0]))
+  dx = np.dot(dout, cache[1].T)
+  dtheta = np.dot(better_x.T, dout)
+  dtheta0 = np.sum(dout,axis=0)
+  # dtheta0 = np.ones(shape=[dout.shape[1]])
+  dx = np.reshape(dx, x.shape)
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -82,8 +85,8 @@ def relu_forward(x):
   # TODO: Implement the ReLU forward pass.                                    #
   #############################################################################
   # 1 line of code expected
-
-  pass
+  out = x
+  out[np.where(x<0.0)] = 0.0
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -107,8 +110,10 @@ def relu_backward(dout, cache):
   # TODO: Implement the ReLU backward pass.                                   #
   #############################################################################
   # 1 line of code expected. Hint: use np.where
-
-  pass
+  print "dout",dout.shape
+  print "x",x.shape
+  dx = dout
+  dx[np.where(x < 0.0)] = 0.0
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################

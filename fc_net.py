@@ -46,8 +46,10 @@ class TwoLayerNet(object):
     # layer weights and biases using the keys 'theta2' and 'theta2_0.          #
     ############################################################################
     # 4 lines of code expected
-
-    pass
+    self.theta1 = np.reshape(np.random.normal(0, weight_scale, input_dim*hidden_dim),[input_dim, hidden_dim])
+    self.theta1_0 = np.zero(shape=[input_dim,hidden_dim])
+    self.theta2 = np.reshape(np.random.normal(0, weight_scale, hidden_dim*num_classes),[hidden_dim, num_classes])
+    self.theta2_0 = np.zero(shape=[hidden_dim,num_classes])
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
