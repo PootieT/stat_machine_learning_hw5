@@ -85,8 +85,7 @@ def relu_forward(x):
   # TODO: Implement the ReLU forward pass.                                    #
   #############################################################################
   # 1 line of code expected
-  out = x
-  out[np.where(x<0.0)] = 0.0
+  out = np.maximum(x,np.zeros_like(x))
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -110,8 +109,6 @@ def relu_backward(dout, cache):
   # TODO: Implement the ReLU backward pass.                                   #
   #############################################################################
   # 1 line of code expected. Hint: use np.where
-  print "dout",dout.shape
-  print "x",x.shape
   dx = dout
   dx[np.where(x < 0.0)] = 0.0
   #############################################################################
