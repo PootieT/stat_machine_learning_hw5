@@ -84,12 +84,14 @@ class TwoLayerNet(object):
     # affine- relu - affine - softmax
     out1, cache1 = affine_relu_forward(X, self.params['theta1'], self.params['theta1_0'])
     out2, cache2 = affine_forward(out1, self.params['theta2'], self.params['theta2_0'])
-    scores = np.exp(out2 - np.max(out2, axis=1, keepdims=True))
-    # scores /= np.sum(scores, axis=1, keepdims=True)
-    print "out1: ", out1.shape
-    print "out2: ", out2.shape
-    print "score:", scores.shape
-    print "scores: ", scores
+    scores = out2
+    
+    #scores = np.exp(out2 - np.max(out2, axis=1, keepdims=True))
+    #scores /= np.sum(scores, axis=1, keepdims=True)
+    #print "out1: ", out1.shape
+    #print "out2: ", out2.shape
+    #print "score:", scores.shape
+    #print "scores: ", scores
 
     ############################################################################
     #                             END OF YOUR CODE                             #
@@ -112,12 +114,14 @@ class TwoLayerNet(object):
     ############################################################################
     # 4-8 lines of code expected
     loss, dx = softmax_loss(out2, y)
-    dx2, grads['dtheta2'], grads['dtheta2_0'] = affine_backward(dx, cache2)
-    dx2 += 0.5 * self.reg * np.sum(grads['dtheta2']**2)
+    dx2, grads['theta2'], grads['theta2_0'] = affine_backward(dx, cache2)
+    loss += 0.5 * self.reg * np.sum(np.square(self.params['theta2']))
+    grads['theta2'] += self.reg * self.params['theta2']
 
 
-    dx1, grads['dtheta1'], grads['dtheta1_0'] = affine_relu_backward(dx2, cache1)
-    dx1 += 0.5 * self.reg * np.sum(grads['dtheta1']**2)
+    dx1, grads['theta1'], grads['theta1_0'] = affine_relu_backward(dx2, cache1)
+    loss += 0.5 * self.reg * np.sum(np.square(self.params['theta1']))
+    grads['theta1'] += self.reg * self.params['theta1']
   
     ############################################################################
     #                             END OF YOUR CODE                             #
