@@ -47,9 +47,9 @@ class TwoLayerNet(object):
     ############################################################################
     # 4 lines of code expected
     self.params['theta1'] = np.reshape(np.random.normal(0, weight_scale, input_dim*hidden_dim),[input_dim, hidden_dim])
-    self.params['theta1_0'] = np.zeros(shape=[input_dim,hidden_dim])
+    self.params['theta1_0'] = np.zeros(shape=[hidden_dim])
     self.params['theta2'] = np.reshape(np.random.normal(0, weight_scale, hidden_dim*num_classes),[hidden_dim, num_classes])
-    self.params['theta2_0'] = np.zeros(shape=[hidden_dim,num_classes])
+    self.params['theta2_0'] = np.zeros(shape=[num_classes])
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
