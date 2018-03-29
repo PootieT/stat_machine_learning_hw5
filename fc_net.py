@@ -234,8 +234,12 @@ class FullyConnectedNet(object):
     ############################################################################
     out = X
     cache_list = []
+    drop_cache_list = []
     for i in range(1, self.num_layers):
       out, cache = affine_relu_forward(out, self.params['theta'+str(i)], self.params['theta'+str(i)+'_0'])
+      if self.use_dropout:
+        out, drop_cache = dropout_forward(out, self.dropout_param)
+        drop_cache_list.append(drop_cache)
       cache_list.append(cache)
     scores = out
     ############################################################################
@@ -261,6 +265,8 @@ class FullyConnectedNet(object):
     loss, dx = softmax_loss(out, y)
     for i in range(self.num_layers-1, 0, -1):
       dx, grads['theta'+str(i)], grads['theta'+str(i)+'_0'] = affine_relu_backward(dx, cache_list[i-1])
+      if self.use_dropout:
+        dx = dropout_backward(dx, drop_cache_list[i-1])
       loss += 0.5 * self.reg * np.sum(np.square(self.params['theta'+str(i)]))
       grads['theta'+str(i)] += self.reg * self.params['theta'+str(i)]
     ############################################################################

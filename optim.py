@@ -101,9 +101,9 @@ def rmsprop(theta, dtheta, config=None):
   # stored in config['cache'].                                                #
   #############################################################################
   c = config['decay_rate']*config['cache'] + (1-config['decay_rate'])*\
-      np.matmul(dtheta,dtheta)
+      np.multiply(dtheta,dtheta)
   next_theta = theta - config['learning_rate']*\
-      np.matmul(dtheta,1/(np.sqrt(c)+config['epsilon']))
+      np.multiply(dtheta,1/(np.sqrt(c)+config['epsilon']))
   config['cache'] = c
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -142,11 +142,11 @@ def adam(theta, dtheta, config=None):
   # stored in config.                                                         #
   #############################################################################
   m = config['beta1']*config['m'] + (1-config['beta1'])*dtheta
-  v = config['beta2']*config['v'] + (1-config['beta2'])*np.matmul(dtheta,dtheta)
+  v = config['beta2']*config['v'] + (1-config['beta2'])*np.multiply(dtheta,dtheta)
   t = config['t'] + 1
   mb = m/(1-config['beta1']**t)
   vb = v/(1-config['beta2']**t)
-  next_theta = theta - config['learning_rate']*np.div(np.sqrt(vb) + config['epsilon'])
+  next_theta = theta - config['learning_rate']* mb / (np.sqrt(vb) + config['epsilon'])
 
   config['m'] = m
   config['v'] = v
