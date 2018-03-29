@@ -183,8 +183,12 @@ class FullyConnectedNet(object):
     #                                                                          #
     ############################################################################
     # about 4 lines of code
-
-
+    for i in range(1, self.num_layers):
+      dims = list(hidden_dims)
+      dims.insert(0, input_dim)
+      dims.append(num_classes)
+      self.params['theta'+str(i)] = np.reshape(np.random.normal(0, weight_scale, dims[i-1]*dims[i]),[dims[i-1], dims[i]])
+      self.params['theta'+str(i)+'_0'] = np.zeros(shape=[dims[i]])
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -228,8 +232,12 @@ class FullyConnectedNet(object):
     # dropout forward pass.                                                    #
     #                                                                          #
     ############################################################################
-
-    pass
+    out = X
+    cache_list = []
+    for i in range(1, self.num_layers):
+      out, cache = affine_relu_forward(out, self.params['theta'+str(i)], self.params['theta'+str(i)+'_0'])
+      cache_list.append(cache)
+    scores = out
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -250,9 +258,11 @@ class FullyConnectedNet(object):
     # automated tests, make sure that your L2 regularization includes a factor #
     # of 0.5 to simplify the expression for the gradient.                      #
     ############################################################################
-
-
-    pass
+    loss, dx = softmax_loss(out, y)
+    for i in range(self.num_layers-1, 0, -1):
+      dx, grads['theta'+str(i)], grads['theta'+str(i)+'_0'] = affine_relu_backward(dx, cache_list[i-1])
+      loss += 0.5 * self.reg * np.sum(np.square(self.params['theta'+str(i)]))
+      grads['theta'+str(i)] += self.reg * self.params['theta'+str(i)]
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
