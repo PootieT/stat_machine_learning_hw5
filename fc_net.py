@@ -46,10 +46,10 @@ class TwoLayerNet(object):
     # layer weights and biases using the keys 'theta2' and 'theta2_0.          #
     ############################################################################
     # 4 lines of code expected
-    self.theta1 = np.reshape(np.random.normal(0, weight_scale, input_dim*hidden_dim),[input_dim, hidden_dim])
-    self.theta1_0 = np.zero(shape=[input_dim,hidden_dim])
-    self.theta2 = np.reshape(np.random.normal(0, weight_scale, hidden_dim*num_classes),[hidden_dim, num_classes])
-    self.theta2_0 = np.zero(shape=[hidden_dim,num_classes])
+    self.params['theta1'] = np.reshape(np.random.normal(0, weight_scale, input_dim*hidden_dim),[input_dim, hidden_dim])
+    self.params['theta1_0'] = np.zeros(shape=[input_dim,hidden_dim])
+    self.params['theta2'] = np.reshape(np.random.normal(0, weight_scale, hidden_dim*num_classes),[hidden_dim, num_classes])
+    self.params['theta2_0'] = np.zeros(shape=[hidden_dim,num_classes])
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -81,9 +81,16 @@ class TwoLayerNet(object):
     ############################################################################
     # Hint: unpack the weight parameters from self.params
     # 3 lines of code expected
+    # affine- relu - affine - softmax
+    out1, cache1 = affine_relu_forward(X, self.params['theta1'], self.params['theta1_0'])
+    out2, cache2 = affine_forward(out1, self.params['theta2'], self.params['theta2_0'])
+    scores = np.exp(out2 - np.max(out2, axis=1, keepdims=True))
+    # scores /= np.sum(scores, axis=1, keepdims=True)
+    print "out1: ", out1.shape
+    print "out2: ", out2.shape
+    print "score:", scores.shape
+    print "scores: ", scores
 
-
-    pass
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -104,8 +111,14 @@ class TwoLayerNet(object):
     # of 0.5 to simplify the expression for the gradient.                      #
     ############################################################################
     # 4-8 lines of code expected
+    loss, dx = softmax_loss(out2, y)
+    dx2, grads['dtheta2'], grads['dtheta2_0'] = affine_backward(dx, cache2)
+    dx2 += 0.5 * self.reg * np.sum(grads['dtheta2']**2)
 
-    pass
+
+    dx1, grads['dtheta1'], grads['dtheta1_0'] = affine_relu_backward(dx2, cache1)
+    dx1 += 0.5 * self.reg * np.sum(grads['dtheta1']**2)
+  
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
