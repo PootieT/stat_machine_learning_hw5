@@ -272,11 +272,10 @@ class FullyConnectedNet(object):
     loss += 0.5 * self.reg * np.sum(np.square(self.params['theta'+str(self.num_layers-1)]))
     grads['theta'+str(self.num_layers-1)] += self.reg * self.params['theta'+str(self.num_layers-1)]
 
-
     for i in range(self.num_layers-2, 0, -1):
-      dx, grads['theta'+str(i)], grads['theta'+str(i)+'_0'] = affine_relu_backward(dx, cache_list[i-1])
       if self.use_dropout:
         dx = dropout_backward(dx, drop_cache_list[i-1])
+      dx, grads['theta'+str(i)], grads['theta'+str(i)+'_0'] = affine_relu_backward(dx, cache_list[i-1])
       loss += 0.5 * self.reg * np.sum(np.square(self.params['theta'+str(i)]))
       grads['theta'+str(i)] += self.reg * self.params['theta'+str(i)]
     ############################################################################

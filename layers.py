@@ -278,8 +278,13 @@ def max_pool_forward_naive(x, pool_param):
   #############################################################################
   # TODO: Implement the max pooling forward pass                              #
   #############################################################################
-
-  pass
+  m, C, H, W = x.shape
+  Fh, Fw, S = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+  out = np.zeros([m, C, 1+(H-Fh)/S, 1+(W-Fw)/S])
+  for i in range(out.shape[2]):
+  	for j in range(out.shape[3]):
+  	  section = x[:, :, i*S:i*S+Fh, j*S:j*S+Fw]
+  	  out[:,:,i,j] = np.max(np.max(section,axis=3),axis=2)
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -302,8 +307,16 @@ def max_pool_backward_naive(dout, cache):
   #############################################################################
   # TODO: Implement the max pooling backward pass                             #
   #############################################################################
-
-  pass
+  m, C, H, W = cache[0].shape
+  Fh, Fw, S = cache[1]['pool_height'], cache[1]['pool_width'], cache[1]['stride']
+  dx = np.zeros(cache[0].shape)
+  for i in range(dout.shape[2]):
+  	for j in range(dout.shape[3]):
+  	  section = cache[0][:, :, i*S:i*S+Fh, j*S:j*S+Fw]
+  	  for mi in range(section.shape[0]):
+  	  	for ci in range(section.shape[1]):
+  	  	  max_index = np.where(section[mi,ci,:,:] == np.max(section[mi,ci,:,:]))
+  	  	  dx[mi, ci, max_index[0]+i*S, max_index[1]+j*S] = dout[mi,ci,i,j]  
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
