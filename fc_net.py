@@ -183,10 +183,10 @@ class FullyConnectedNet(object):
     #                                                                          #
     ############################################################################
     # about 4 lines of code
+    dims = list(hidden_dims)
+    dims.insert(0, input_dim)
+    dims.append(num_classes)
     for i in range(1, self.num_layers):
-      dims = list(hidden_dims)
-      dims.insert(0, input_dim)
-      dims.append(num_classes)
       self.params['theta'+str(i)] = np.reshape(np.random.normal(0, weight_scale, dims[i-1]*dims[i]),[dims[i-1], dims[i]])
       self.params['theta'+str(i)+'_0'] = np.zeros(shape=[dims[i]])
     ############################################################################
@@ -235,12 +235,16 @@ class FullyConnectedNet(object):
     out = X
     cache_list = []
     drop_cache_list = []
-    for i in range(1, self.num_layers):
+    for i in range(1, self.num_layers-1):
       out, cache = affine_relu_forward(out, self.params['theta'+str(i)], self.params['theta'+str(i)+'_0'])
       if self.use_dropout:
         out, drop_cache = dropout_forward(out, self.dropout_param)
         drop_cache_list.append(drop_cache)
       cache_list.append(cache)
+      
+    out, cache = affine_forward(out, self.params['theta'+str(self.num_layers-1)], self.params['theta'+str(self.num_layers-1)+'_0'])
+    cache_list.append(cache)
+    
     scores = out
     ############################################################################
     #                             END OF YOUR CODE                             #
@@ -263,7 +267,13 @@ class FullyConnectedNet(object):
     # of 0.5 to simplify the expression for the gradient.                      #
     ############################################################################
     loss, dx = softmax_loss(out, y)
-    for i in range(self.num_layers-1, 0, -1):
+
+    dx, grads['theta'+str(self.num_layers-1)], grads['theta'+str(self.num_layers-1)+'_0'] = affine_backward(dx, cache_list[self.num_layers-2])
+    loss += 0.5 * self.reg * np.sum(np.square(self.params['theta'+str(self.num_layers-1)]))
+    grads['theta'+str(self.num_layers-1)] += self.reg * self.params['theta'+str(self.num_layers-1)]
+
+
+    for i in range(self.num_layers-2, 0, -1):
       dx, grads['theta'+str(i)], grads['theta'+str(i)+'_0'] = affine_relu_backward(dx, cache_list[i-1])
       if self.use_dropout:
         dx = dropout_backward(dx, drop_cache_list[i-1])
