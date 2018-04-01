@@ -32,7 +32,7 @@ def affine_relu_backward(dout, cache):
 
 
 
-def conv_relu_forward(x, theta, theta0, conv_param):
+def conv_relu_forward(x, theta, theta0, conv_param, leaky=False):
   """
   A convenience layer that performs a convolution followed by a ReLU.
 
@@ -45,22 +45,28 @@ def conv_relu_forward(x, theta, theta0, conv_param):
   - cache: Object to give to the backward pass
   """
   a, conv_cache = conv_forward_fast(x, theta, theta0, conv_param)
-  out, relu_cache = relu_forward(a)
+  if leaky:
+    out, relu_cache = leaky_relu_forward(a)
+  else:
+    out, relu_cache = relu_forward(a)
   cache = (conv_cache, relu_cache)
   return out, cache
 
 
-def conv_relu_backward(dout, cache):
+def conv_relu_backward(dout, cache, leaky=False):
   """
   Backward pass for the conv-relu convenience layer.
   """
   conv_cache, relu_cache = cache
-  da = relu_backward(dout, relu_cache)
+  if leaky:
+    da = leaky_relu_backward(dout, relu_cache)
+  else:
+    da = relu_backward(dout, relu_cache)
   dx, dtheta, dtheta0 = conv_backward_fast(da, conv_cache)
   return dx, dtheta, dtheta0
 
 
-def conv_relu_pool_forward(x, theta, theta0, conv_param, pool_param):
+def conv_relu_pool_forward(x, theta, theta0, conv_param, pool_param, leaky=False):
   """
   Convenience layer that performs a convolution, a ReLU, and a pool.
 
@@ -74,19 +80,25 @@ def conv_relu_pool_forward(x, theta, theta0, conv_param, pool_param):
   - cache: Object to give to the backward pass
   """
   a, conv_cache = conv_forward_fast(x, theta, theta0, conv_param)
-  s, relu_cache = relu_forward(a)
+  if leaky:
+    s, relu_cache = leaky_relu_forward(a)
+  else:
+    s, relu_cache = relu_forward(a)
   out, pool_cache = max_pool_forward_fast(s, pool_param)
   cache = (conv_cache, relu_cache, pool_cache)
   return out, cache
 
 
-def conv_relu_pool_backward(dout, cache):
+def conv_relu_pool_backward(dout, cache, leaky=False):
   """
   Backward pass for the conv-relu-pool convenience layer
   """
   conv_cache, relu_cache, pool_cache = cache
   ds = max_pool_backward_fast(dout, pool_cache)
-  da = relu_backward(ds, relu_cache)
+  if leaky:
+    da = leaky_relu_backward(ds, relu_cache)
+  else:
+    da = relu_backward(ds, relu_cache)
   dx, dtheta, db = conv_backward_fast(da, conv_cache)
   return dx, dtheta, db
 

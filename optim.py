@@ -111,6 +111,55 @@ def rmsprop(theta, dtheta, config=None):
 
   return next_theta, config
 
+def AdaGrad(theta, dtheta, config=None):
+  """
+  Uses the AdaGrad update rule, which uses a square root of sum of squared gradient
+  values to set adaptive per-parameter learning rates.
+
+  config format:
+  - learning_rate: Scalar learning rate.
+  - epsilon: Small scalar used for smoothing to avoid dividing by zero.
+  - cache: Moving average of second moments of gradients.
+  """
+  if config is None: config = {}
+  config.setdefault('learning_rate', 1e-2)
+  config.setdefault('epsilon', 1e-8)
+  config.setdefault('cache', np.zeros_like(theta))
+
+  next_theta = None
+
+  c = config['cache'] + np.multiply(dtheta,dtheta)
+  next_theta = theta - config['learning_rate']*\
+      np.multiply(dtheta,1/(np.sqrt(c)+config['epsilon']))
+  config['cache'] = c
+
+  return next_theta, config
+
+def AdaDelta(theta, dtheta, config=None):
+  """
+  Uses the AdaDelta update rule, which uses a square root of sum of squared gradient
+  values to set adaptive per-parameter learning rates.
+
+  config format:
+  - learning_rate: Scalar learning rate.
+  - epsilon: Small scalar used for smoothing to avoid dividing by zero.
+  - cache: Moving average of second moments of gradients.
+  """
+  if config is None: config = {}
+  config.setdefault('learning_rate', 1e-2)
+  config.setdefault('decay_rate', 0.99)
+  config.setdefault('epsilon', 1e-8)
+  config.setdefault('cache', np.zeros_like(theta))
+
+  next_theta = None
+
+  c = config['decay_rate']*config['cache'] + (1-config['decay_rate'])*\
+      np.multiply(dtheta,dtheta)
+  next_theta = theta - config['learning_rate']*\
+      np.multiply(dtheta,(np.sqrt(config['cache']+config['epsilon']))/(np.sqrt(c+config['epsilon'])))
+  config['cache'] = c
+
+  return next_theta, config
 
 def adam(theta, dtheta, config=None):
   """
