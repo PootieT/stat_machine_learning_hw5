@@ -2,7 +2,7 @@ from layers import *
 from fast_layers import *
 
 
-def affine_relu_forward(x, theta, theta0):
+def affine_relu_forward(x, theta, theta0, leaky=False):
   """
   Convenience layer that perorms an affine transform followed by a ReLU
 
@@ -15,17 +15,23 @@ def affine_relu_forward(x, theta, theta0):
   - cache: Object to give to the backward pass
   """
   a, fc_cache = affine_forward(x, theta, theta0)
-  out, relu_cache = relu_forward(a)
+  if leaky:
+    out, relu_cache = leaky_relu_forward(a)
+  else:
+    out, relu_cache = relu_forward(a)
   cache = (fc_cache, relu_cache)
   return out, cache
 
 
-def affine_relu_backward(dout, cache):
+def affine_relu_backward(dout, cache, leaky=False):
   """
   Backward pass for the affine-relu convenience layer
   """
   fc_cache, relu_cache = cache
-  da = relu_backward(dout, relu_cache)
+  if leaky:
+    da = leaky_relu_backward(dout, relu_cache)
+  else:
+    da = relu_backward(dout, relu_cache)
   dx, dtheta, dtheta0 = affine_backward(da, fc_cache)
   return dx, dtheta, dtheta0
 

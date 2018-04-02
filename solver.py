@@ -230,6 +230,8 @@ class Solver(object):
       if self.verbose and t % self.print_every == 0:
         print '(Iteration %d / %d) loss: %f' % (
                t + 1, num_iterations, self.loss_history[-1])
+        val_acc = self.check_accuracy(self.X_val, self.y_val)
+        print 'Validation acc', val_acc
 
       # At the end of every epoch, increment the epoch counter and decay the
       # learning rate.
