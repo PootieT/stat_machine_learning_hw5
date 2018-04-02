@@ -16,9 +16,9 @@ class ThreeLayerConvNet(object):
   channels.
   """
   
-  def __init__(self, input_dim=(3, 32, 32), num_filters=[32,32], filter_size=[7,7],
-               hidden_dim=[512,128], num_classes=10, weight_scale=1e-3, reg=0.0,
-               dtype=np.float32, dropout=0.0,seed=None, leaky=False):
+  def __init__(self, input_dim=(3, 32, 32), num_filters=32, filter_size=7,
+               hidden_dim=100, num_classes=10, weight_scale=1e-3, reg=0.0,
+               dtype=np.float32):
     """
     Initialize a new network.
     
@@ -36,46 +36,36 @@ class ThreeLayerConvNet(object):
     self.params = {}
     self.reg = reg
     self.dtype = dtype
-    self.num_filters = num_filters
-    self.hidden_dim = hidden_dim
-    self.filter_size = filter_size
-    self.use_dropout = dropout > 0
-    self.leaky = leaky
     
+    ############################################################################
+    # TODO: Initialize weights and biases for the three-layer convolutional    #
+    # network. Weights should be initialized from a Gaussian with standard     #
+    # deviation equal to weight_scale; biases should be initialized to zero.   #
+    # All weights and biases should be stored in the dictionary self.params.   #
+    # Store weights and biases for the convolutional layer using the keys      #
+    # 'theta1' and 'theta1_0'; use keys 'theta2' and 'theta2_0' for the        #
+    # weights and biases of the hidden affine layer, and keys 'theta3' and     #
+    # 'theta3_0' for the weights and biases of the output affine layer.        #
+    ############################################################################
+    # about 12 lines of code
     stride = 1
-    pad = (filter_size[0] - 1) / 2
-    
-    depth, width, height = input_dim
+    pad = (filter_size - 1) / 2
+    conv_size = [num_filters, input_dim[0], filter_size, filter_size]
+    conv_para_num = num_filters * input_dim[0] * filter_size * filter_size
+    conv_out_size = [num_filters, 1 + (input_dim[1] + 2 * pad - filter_size) / stride, 1 + (input_dim[2] + 2 * pad - filter_size) / stride]
+    conv_out_num = conv_out_size[0] * conv_out_size[1] * conv_out_size[2] / 4
 
-    for i in range(0,len(num_filters)):
-      layer_size = [num_filters[i], depth, filter_size[i], filter_size[i]]
-      layer_num = layer_size[0] * layer_size[1] * layer_size[2] * layer_size[3]
-      
-      self.params['theta'+str(i+1)] = np.reshape(np.random.normal(0, weight_scale, layer_num), layer_size)
-      self.params['theta'+str(i+1)+'_0'] = np.zeros(shape=[num_filters[i]])
-    
-      depth = num_filters[i]
-      width = 1 + (width + 2 * pad - filter_size[i]) / stride
-      height = 1 + (height + 2 * pad - filter_size[i]) / stride
-    
-    
-    conv_out_num = depth * width * height / 4
-    dims = [conv_out_num,]*len(num_filters) + hidden_dim + [num_classes]
-    
-    for i in range(len(num_filters), len(num_filters)+len(hidden_dim) + 1):
-      self.params['theta'+str(i+1)] = np.reshape(np.random.normal(0, weight_scale, dims[i-1]*dims[i]),[dims[i-1], dims[i]])
-      
-      self.params['theta'+str(i+1)+'_0'] = np.zeros(shape=[dims[i]])
+    self.params['theta1'] = np.reshape(np.random.normal(0, weight_scale, conv_para_num), conv_size)
+    self.params['theta1_0'] = np.zeros(shape=[num_filters])
 
-
-    self.dropout_param = {}
-    if self.use_dropout:
-      self.dropout_param = {'mode': 'train', 'p': dropout}
-      if seed is not None:
-        self.dropout_param['seed'] = seed
-   
-    for k, v in self.params.iteritems():
-      print k, np.shape(v)
+    self.params['theta2'] = np.reshape(np.random.normal(0, weight_scale, conv_out_num*hidden_dim),[conv_out_num, hidden_dim])
+    self.params['theta2_0'] = np.zeros(shape=[hidden_dim])
+    
+    self.params['theta3'] = np.reshape(np.random.normal(0, weight_scale, hidden_dim*num_classes),[hidden_dim, num_classes])
+    self.params['theta3_0'] = np.zeros(shape=[num_classes])
+    ############################################################################
+    #                             END OF YOUR CODE                             #
+    ############################################################################
 
     for k, v in self.params.iteritems():
       self.params[k] = v.astype(dtype)
@@ -90,15 +80,12 @@ class ThreeLayerConvNet(object):
     conv - relu - 2x2 max pool - affine - relu - affine - softmax
     
     """
-    mode = 'test' if y is None else 'train'
-
-    # Set train/test mode for  dropout param since they
-    # behave differently during training and testing.
-    if self.dropout_param is not None:
-      self.dropout_param['mode'] = mode   
-   
+    theta1, theta1_0 = self.params['theta1'], self.params['theta1_0']
+    theta2, theta2_0 = self.params['theta2'], self.params['theta2_0']
+    theta3, theta3_0 = self.params['theta3'], self.params['theta3_0']
+    
     # pass conv_param to the forward pass for the convolutional layer
-    filter_size = self.filter_size[0]
+    filter_size = theta1.shape[2]
     conv_param = {'stride': 1, 'pad': (filter_size - 1) / 2}
 
     # pass pool_param to the forward pass for the max-pooling layer
@@ -111,43 +98,10 @@ class ThreeLayerConvNet(object):
     # variable.                                                                #
     ############################################################################
     # about 3 lines of code (use the helper functions in layer_utils.py)
-    cache_dict = {}
-    drop_cache_dict = {}
-    out = X
-
-    # adds the conv_relu layers
-    for i in range(0, len(self.num_filters)-1):
-      out, cache = conv_relu_forward(out,
-                                     self.params['theta'+str(i+1)],
-                                     self.params['theta'+str(i+1)+'_0'],
-                                     conv_param,
-                                     leaky=self.leaky)
-      cache_dict['theta'+str(i+1)] = cache
     
-    # The last conv layer has a max pool 
-    out, cache = conv_relu_pool_forward(out,
-                                        self.params['theta'+str(len(self.num_filters))],
-                                        self.params['theta'+str(len(self.num_filters))+'_0'],
-                                        conv_param, pool_param,
-                                        leaky=self.leaky)
-    cache_dict['theta'+str(len(self.num_filters))] = cache
-    
-    #Adds the fully connected layers
-    for i in range(len(self.num_filters), len(self.num_filters)+len(self.hidden_dim)):
-      out, cache = affine_relu_forward(out,
-                                       self.params['theta'+str(i+1)],
-                                       self.params['theta'+str(i+1)+'_0'],
-                                       leaky=self.leaky)
-      cache_dict['theta'+str(i+1)] = cache
-      if self.use_dropout:
-        out, drop_cache = dropout_forward(out, self.dropout_param)
-        drop_cache_dict['theta'+str(i+1)] = drop_cache
-
-    scores, cache = affine_forward(out,
-                                   self.params['theta'+str(1+len(self.num_filters)+len(self.hidden_dim))],
-                                   self.params['theta'+str(1+len(self.num_filters)+len(self.hidden_dim))+'_0'])
-                                          
-    cache_dict['theta'+str(1+len(self.num_filters)+len(self.hidden_dim))] = cache
+    out_conv, cache_conv = conv_relu_pool_forward(X, theta1, theta1_0, conv_param, pool_param)
+    out_relu, cache_relu = affine_relu_forward(out_conv, theta2, theta2_0)
+    scores, cache_scores = affine_forward(out_relu, theta3, theta3_0)
 
     ############################################################################
     #                             END OF YOUR CODE                             #
@@ -164,31 +118,20 @@ class ThreeLayerConvNet(object):
     # for self.params[k]. Don't forget to add L2 regularization!               #
     ############################################################################
     # about 12 lines of code
-    i = len(self.num_filters)+len(self.hidden_dim)
-
     loss, dx = softmax_loss(scores, y)
-    dx, grads['theta'+str(i+1)], grads['theta'+str(i+1)+'_0'] = affine_backward(dx,
-                                                                                cache_dict['theta'+str(i+1)])
-
-    for i in range(len(self.num_filters)+len(self.hidden_dim)-1, len(self.num_filters)-1, -1):
-      if self.use_dropout:
-        dx = dropout_backward(dx, drop_cache_dict['theta'+str(i+1)])
-
-      dx, grads['theta'+str(i+1)], grads['theta'+str(i+1)+'_0'] = affine_relu_backward(dx,
-                                                                                       cache_dict['theta'+str(i+1)],
-                                                                                       leaky=self.leaky)
-    i = len(self.num_filters)
-    dx, grads['theta'+str(i)], grads['theta'+str(i)+'_0'] = conv_relu_pool_backward(dx,
-                                                                               cache_dict['theta'+str(i)],
-                                                                                   leaky=self.leaky)
-    for i in range(len(self.num_filters)-1, 0, -1):
-      dx, grads['theta'+str(i)], grads['theta'+str(i)+'_0'] = conv_relu_backward(dx,
-                                                                            cache_dict['theta'+str(i)],
-                                                                                leaky=self.leaky)
-    for i in range(1,2+len(self.num_filters)+len(self.hidden_dim)):
-      loss += 0.5 * self.reg * np.sum(np.square(self.params['theta'+str(i)]))
-      grads['theta'+str(i)] += self.reg * self.params['theta'+str(i)]
-
+    dx3, grads['theta3'], grads['theta3_0'] = affine_backward(dx, cache_scores)
+    
+    dx2, grads['theta2'], grads['theta2_0'] = affine_relu_backward(dx3, cache_relu)
+    
+    dx1, grads['theta1'], grads['theta1_0'] = conv_relu_pool_backward(dx2, cache_conv)
+    
+    loss += 0.5 * self.reg * np.sum(np.square(self.params['theta1']))
+    loss += 0.5 * self.reg * np.sum(np.square(self.params['theta2']))
+    loss += 0.5 * self.reg * np.sum(np.square(self.params['theta3']))
+    grads['theta1'] += self.reg * self.params['theta1']
+    grads['theta2'] += self.reg * self.params['theta2']
+    grads['theta3'] += self.reg * self.params['theta3']
+    
     
     ############################################################################
     #                             END OF YOUR CODE                             #
